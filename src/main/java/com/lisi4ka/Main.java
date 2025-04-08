@@ -21,6 +21,7 @@ public class Main {
             print(l * 4);
             print(m);
             print(c);
+            print(l);
         """;
 
         CharStream charStream = CharStreams.fromString(input);
@@ -28,6 +29,7 @@ public class Main {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniLangParser parser = new MiniLangParser(tokens);
         ParseTree tree = parser.program();
+        System.out.print("hello");
 
         MiniLangInterpreter interpreter = new MiniLangInterpreter();
         interpreter.visit(tree);
