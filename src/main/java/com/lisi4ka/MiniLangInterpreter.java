@@ -1,103 +1,170 @@
 package com.lisi4ka;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class MiniLangInterpreter extends MiniLangBaseVisitor<Integer> {
-    private final Map<String, Integer> memory = new HashMap<>();
+public class MiniLangInterpreter extends MiniLangBaseVisitor<Object> {
+    private final Map<String, Object> memory = new HashMap<>();
 
     @Override
-    public Integer visitProgram(MiniLangParser.ProgramContext ctx) {
-        for (var stmt : ctx.statement()) {
+    public Object visitProgram(MiniLangParser.ProgramContext ctx) {
+        for (MiniLangParser.StatementContext stmt : ctx.statement()) {
             visit(stmt);
         }
-        return 0;
+        return null;
     }
 
     @Override
-    public Integer visitBlock(MiniLangParser.BlockContext ctx) {
-        for (var stmt : ctx.statement()) {
-            visit(stmt);
-        }
-        return 0;
-    }
-
-    @Override
-    public Integer visitVariable(MiniLangParser.VariableContext ctx) {
-        return memory.getOrDefault(ctx.ID().getText(), 0);
-    }
-
-    @Override
-    public Integer visitIntExpr(MiniLangParser.IntExprContext ctx) {
-        return Integer.parseInt(ctx.INT().getText());
-    }
-
-    @Override
-    public Integer visitVarExpr(MiniLangParser.VarExprContext ctx) {
-        return visit(ctx.variable());
-    }
-
-    @Override
-    public Integer visitParenExpr(MiniLangParser.ParenExprContext ctx) {
-        return visit(ctx.expr());
-    }
-
-    @Override
-    public Integer visitAddSubExpr(MiniLangParser.AddSubExprContext ctx) {
-        int left = visit(ctx.expr(0));
-        int right = visit(ctx.expr(1));
-        return ctx.op.getText().equals("+") ? left + right : left - right;
-    }
-
-    @Override
-    public Integer visitMulDivExpr(MiniLangParser.MulDivExprContext ctx) {
-        int left = visit(ctx.expr(0));
-        int right = visit(ctx.expr(1));
-        return ctx.op.getText().equals("*") ? left * right : left / right;
-    }
-
-    @Override
-    public Integer visitCompareExpr(MiniLangParser.CompareExprContext ctx) {
-        int left = visit(ctx.expr(0));
-        int right = visit(ctx.expr(1));
-        return switch (ctx.op.getText()) {
-            case "==" -> (left == right) ? 1 : 0;
-            case "!=" -> (left != right) ? 1 : 0;
-            case "<" -> (left < right) ? 1 : 0;
-            case ">" -> (left > right) ? 1 : 0;
-            case "<=" -> (left <= right) ? 1 : 0;
-            case ">=" -> (left >= right) ? 1 : 0;
-            default -> 0;
-        };
-    }
-
-    @Override
-    public Integer visitStatement(MiniLangParser.StatementContext ctx) {
+    public Object visitStatement(MiniLangParser.StatementContext ctx) {
         if (ctx.variable() != null && ctx.expr() != null) {
-            // Присваивание
-            int value = visit(ctx.expr());
+            Object value = visit(ctx.expr());
             memory.put(ctx.variable().getText(), value);
         } else if (ctx.getChild(0).getText().equals("print")) {
-            // Обработка print(expr);
-            int value = visit(ctx.expr());
+            Object value = visit(ctx.expr());
             System.out.println(value);
         } else if (ctx.getChild(0).getText().equals("if")) {
-            int cond = visit(ctx.expr());
-            if (cond != 0) {
+            Object cond = visit(ctx.expr());
+            if (toInt(cond) != 0) {
                 visit(ctx.block(0));
             } else if (ctx.block().size() > 1) {
                 visit(ctx.block(1));
             }
         } else if (ctx.getChild(0).getText().equals("while")) {
-            while (visit(ctx.expr()) != 0) {
+            while (toInt(visit(ctx.expr())) != 0) {
                 visit(ctx.block(0));
             }
         } else {
-            // Просто блок
             visit(ctx.block(0));
         }
-        return 0;
+        return null;
+    }
+
+    @Override
+    public Object visitBlock(MiniLangParser.BlockContext ctx) {
+        for (MiniLangParser.StatementContext stmt : ctx.statement()) {
+            visit(stmt);
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitVarExpr(MiniLangParser.VarExprContext ctx) {
+        return memory.getOrDefault(ctx.getText(), 0);
+    }
+
+    @Override
+    public Object visitIntExpr(MiniLangParser.IntExprContext ctx) {
+        return Integer.parseInt(ctx.getText());
+    }
+
+    @Override
+    public Object visitFloatExpr(MiniLangParser.FloatExprContext ctx) {
+        return Double.parseDouble(ctx.getText());
+    }
+
+    @Override
+    public Object visitStringExpr(MiniLangParser.StringExprContext ctx) {
+        return ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
+    }
+
+    @Override
+    public Object visitParenExpr(MiniLangParser.ParenExprContext ctx) {
+        return visit(ctx.expr());
+    }
+
+    @Override
+    public Object visitAddSubExpr(MiniLangParser.AddSubExprContext ctx) {
+        Object left = visit(ctx.expr(0));
+        Object right = visit(ctx.expr(1));
+        String op = ctx.op.getText();
+
+        if (left instanceof String && right instanceof String) {
+            if (op.equals("+")) {
+                return left + right.toString();
+            } else if (op.equals("-")) {
+                return left.toString().replace(right.toString(), "");
+            } else {
+                throw new RuntimeException("Unsupported operation on strings: " + op);
+            }
+        } else if (left instanceof String && right instanceof Integer && op.equals("*")) {
+            return left.toString().repeat((Integer) right);
+        } else if ((left instanceof Integer || left instanceof Double) &&
+                (right instanceof Integer || right instanceof Double)) {
+            double l = toDouble(left);
+            double r = toDouble(right);
+            return op.equals("+") ? promote(l + r) : promote(l - r);
+        } else {
+            throw new RuntimeException("Unsupported operands for + or -");
+        }
+    }
+
+    @Override
+    public Object visitMulDivExpr(MiniLangParser.MulDivExprContext ctx) {
+        Object left = visit(ctx.expr(0));
+        Object right = visit(ctx.expr(1));
+        String op = ctx.op.getText();
+
+        if ((left instanceof Integer || left instanceof Double) &&
+                (right instanceof Integer || right instanceof Double)) {
+            double l = toDouble(left);
+            double r = toDouble(right);
+            return op.equals("*") ? promote(l * r) : promote(l / r);
+        }
+
+        if (left instanceof String && right instanceof Integer && op.equals("*")) {
+            return ((String) left).repeat((Integer) right);
+        }
+
+        throw new RuntimeException("Unsupported operands for * or /");
+    }
+
+    @Override
+    public Object visitCompareExpr(MiniLangParser.CompareExprContext ctx) {
+        Object left = visit(ctx.expr(0));
+        Object right = visit(ctx.expr(1));
+        String op = ctx.op.getText();
+
+        if ((left instanceof Integer || left instanceof Double) && (right instanceof Integer || right instanceof Double)) {
+            double l = toDouble(left);
+            double r = toDouble(right);
+            return switch (op) {
+                case "==" -> l == r ? 1 : 0;
+                case "!=" -> l != r ? 1 : 0;
+                case "<" -> l < r ? 1 : 0;
+                case ">" -> l > r ? 1 : 0;
+                case "<=" -> l <= r ? 1 : 0;
+                case ">=" -> l >= r ? 1 : 0;
+                default -> throw new RuntimeException("Invalid comparison operator");
+            };
+        } else if (left instanceof String && right instanceof String && op.equals("==")) {
+            return left.equals(right) ? 1 : 0;
+        }
+
+        throw new RuntimeException("Unsupported comparison");
+    }
+
+    @Override
+    public Object visitRoundExpr(MiniLangParser.RoundExprContext ctx) {
+        Object value = visit(ctx.expr());
+        if (value instanceof Double) {
+            return (int) Math.round((Double) value);
+        }
+        throw new RuntimeException("round expects a float");
+    }
+
+    private int toInt(Object obj) {
+        if (obj instanceof Integer) return (Integer) obj;
+        if (obj instanceof Double) return (int) Math.round((Double) obj);
+        throw new RuntimeException("Cannot convert to int: " + obj);
+    }
+
+    private double toDouble(Object obj) {
+        if (obj instanceof Integer) return ((Integer) obj).doubleValue();
+        if (obj instanceof Double) return (Double) obj;
+        throw new RuntimeException("Cannot convert to double: " + obj);
+    }
+
+    private Object promote(double value) {
+        return value == Math.floor(value) ? (int) value : value;
     }
 }

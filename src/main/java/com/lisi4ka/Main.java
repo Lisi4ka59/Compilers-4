@@ -4,21 +4,22 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         String input = """
             a = 5;
             b = 10;
             if (a < b) {
                 c = a + b;
-            } else {
-                c = a - b;
             }
             i = 0;
             while (i < 3) {
                 c = c + 1;
                 i = i + 1;
             }
-            print(i);
+            m = b / 3;
+            l = "str";
+            print(l * 4);
+            print(m);
             print(c);
         """;
 
