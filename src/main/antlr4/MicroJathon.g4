@@ -1,4 +1,4 @@
-grammar MiniLang;
+grammar MicroJathon;
 
 program: statement* EOF;
 

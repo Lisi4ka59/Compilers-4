@@ -44,12 +44,12 @@ public class Main {
         }
 
         CharStream charStream = CharStreams.fromString(program);
-        MiniLangLexer lexer = new MiniLangLexer(charStream);
+        MicroJathonLexer lexer = new MicroJathonLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniLangParser parser = new MiniLangParser(tokens);
+        MicroJathonParser parser = new MicroJathonParser(tokens);
         ParseTree tree = parser.program();
 
-        MiniLangInterpreter interpreter = new MiniLangInterpreter();
+        MicroJathonInterpreter interpreter = new MicroJathonInterpreter();
         interpreter.visit(tree);
     }
 }

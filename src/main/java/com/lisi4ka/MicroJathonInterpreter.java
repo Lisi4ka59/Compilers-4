@@ -3,19 +3,19 @@ package com.lisi4ka;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MiniLangInterpreter extends MiniLangBaseVisitor<Object> {
+public class MicroJathonInterpreter extends MicroJathonBaseVisitor<Object> {
     private final Map<String, Object> memory = new HashMap<>();
 
     @Override
-    public Object visitProgram(MiniLangParser.ProgramContext ctx) {
-        for (MiniLangParser.StatementContext stmt : ctx.statement()) {
+    public Object visitProgram(MicroJathonParser.ProgramContext ctx) {
+        for (MicroJathonParser.StatementContext stmt : ctx.statement()) {
             visit(stmt);
         }
         return null;
     }
 
     @Override
-    public Object visitStatement(MiniLangParser.StatementContext ctx) {
+    public Object visitStatement(MicroJathonParser.StatementContext ctx) {
         if (ctx.variable() != null && ctx.expr() != null) {
             Object value = visit(ctx.expr());
             memory.put(ctx.variable().getText(), value);
@@ -40,40 +40,40 @@ public class MiniLangInterpreter extends MiniLangBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitBlock(MiniLangParser.BlockContext ctx) {
-        for (MiniLangParser.StatementContext stmt : ctx.statement()) {
+    public Object visitBlock(MicroJathonParser.BlockContext ctx) {
+        for (MicroJathonParser.StatementContext stmt : ctx.statement()) {
             visit(stmt);
         }
         return null;
     }
 
     @Override
-    public Object visitVarExpr(MiniLangParser.VarExprContext ctx) {
+    public Object visitVarExpr(MicroJathonParser.VarExprContext ctx) {
         return memory.getOrDefault(ctx.getText(), 0);
     }
 
     @Override
-    public Object visitIntExpr(MiniLangParser.IntExprContext ctx) {
+    public Object visitIntExpr(MicroJathonParser.IntExprContext ctx) {
         return Integer.parseInt(ctx.getText());
     }
 
     @Override
-    public Object visitFloatExpr(MiniLangParser.FloatExprContext ctx) {
+    public Object visitFloatExpr(MicroJathonParser.FloatExprContext ctx) {
         return Double.parseDouble(ctx.getText());
     }
 
     @Override
-    public Object visitStringExpr(MiniLangParser.StringExprContext ctx) {
+    public Object visitStringExpr(MicroJathonParser.StringExprContext ctx) {
         return ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
     }
 
     @Override
-    public Object visitParenExpr(MiniLangParser.ParenExprContext ctx) {
+    public Object visitParenExpr(MicroJathonParser.ParenExprContext ctx) {
         return visit(ctx.expr());
     }
 
     @Override
-    public Object visitAddSubExpr(MiniLangParser.AddSubExprContext ctx) {
+    public Object visitAddSubExpr(MicroJathonParser.AddSubExprContext ctx) {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
         String op = ctx.op.getText();
@@ -99,7 +99,7 @@ public class MiniLangInterpreter extends MiniLangBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitMulDivExpr(MiniLangParser.MulDivExprContext ctx) {
+    public Object visitMulDivExpr(MicroJathonParser.MulDivExprContext ctx) {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
         String op = ctx.op.getText();
@@ -119,7 +119,7 @@ public class MiniLangInterpreter extends MiniLangBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitCompareExpr(MiniLangParser.CompareExprContext ctx) {
+    public Object visitCompareExpr(MicroJathonParser.CompareExprContext ctx) {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
         String op = ctx.op.getText();
@@ -144,7 +144,7 @@ public class MiniLangInterpreter extends MiniLangBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitRoundExpr(MiniLangParser.RoundExprContext ctx) {
+    public Object visitRoundExpr(MicroJathonParser.RoundExprContext ctx) {
         Object value = visit(ctx.expr());
         if (value instanceof Double) {
             return (int) Math.round((Double) value);
