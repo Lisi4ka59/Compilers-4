@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 
 public class Main {
     public static void main(String[] args) {
+        System.out.println("Enter your MicroJathon program (press ⌘ + D to end input):");
         StringBuilder programBuilder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             String line;
@@ -16,7 +17,7 @@ public class Main {
                 programBuilder.append(line).append("\n");
             }
         } catch (IOException e) {
-            System.err.println("Error reading input: " + e.getMessage());
+            System.err.println("Error reading example: " + e.getMessage());
             return;
         }
 
@@ -42,6 +43,7 @@ public class Main {
             """;
             System.out.println("Using default input:\n" + program);
         }
+        System.out.println("Interpreting and running your MicroJathon program...");
 
         CharStream charStream = CharStreams.fromString(program);
         MicroJathonLexer lexer = new MicroJathonLexer(charStream);
