@@ -136,8 +136,11 @@ public class MicroJathonInterpreter extends MicroJathonBaseVisitor<Object> {
                 case ">=" -> l >= r ? 1 : 0;
                 default -> throw new RuntimeException("Invalid comparison operator");
             };
-        } else if (left instanceof String && right instanceof String && op.equals("==")) {
-            return left.equals(right) ? 1 : 0;
+        } else if (left instanceof String && right instanceof String) {
+            if (op.equals("=="))
+                return left.equals(right) ? 1 : 0;
+            else if (op.equals("!="))
+                return left.equals(right) ? 0 : 1;
         }
 
         throw new RuntimeException("Unsupported comparison");
